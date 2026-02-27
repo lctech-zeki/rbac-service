@@ -1,19 +1,17 @@
-// CUE schema: Role entity
-// Keep in sync with packages/shared/src/index.ts → RoleSchema
+// CUE schema: PermissionGroup entity
+// Keep in sync with packages/shared/src/index.ts → PermissionGroupSchema
 
 package schema
 
-#Role: {
+#PermissionGroup: {
 	id:          string & =~"^[0-9a-f-]{36}$"
 	name:        string & len >= 2 & len <= 100
 	description: string | null
-	parentId:    (string & =~"^[0-9a-f-]{36}$") | null
 	createdAt:   string
 	updatedAt:   string
 }
 
-#CreateRole: {
+#CreatePermissionGroup: {
 	name:         string & len >= 2 & len <= 100
 	description?: string & len <= 500
-	parentId?:    string & =~"^[0-9a-f-]{36}$"
 }

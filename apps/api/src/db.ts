@@ -23,6 +23,7 @@ export const roles = pgTable('roles', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 100 }).notNull().unique(),
   description: text('description'),
+  parentId: uuid('parent_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => [uniqueIndex('roles_name_idx').on(t.name)])
@@ -47,17 +48,43 @@ export const rolePermissions = pgTable('role_permissions', {
   assignedAt: timestamp('assigned_at').defaultNow().notNull(),
 }, (t) => [primaryKey({ columns: [t.roleId, t.permissionId] })])
 
+// ─── Permission Groups ────────────────────────────────────────────────────────
+
+export const permissionGroups = pgTable('permission_groups', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 100 }).notNull().unique(),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => [uniqueIndex('permission_groups_name_idx').on(t.name)])
+
+export const permissionGroupItems = pgTable('permission_group_items', {
+  groupId: uuid('group_id').notNull().references(() => permissionGroups.id, { onDelete: 'cascade' }),
+  permissionId: uuid('permission_id').notNull().references(() => permissions.id, { onDelete: 'cascade' }),
+  assignedAt: timestamp('assigned_at').defaultNow().notNull(),
+}, (t) => [primaryKey({ columns: [t.groupId, t.permissionId] })])
+
+export const rolePermissionGroups = pgTable('role_permission_groups', {
+  roleId: uuid('role_id').notNull().references(() => roles.id, { onDelete: 'cascade' }),
+  groupId: uuid('group_id').notNull().references(() => permissionGroups.id, { onDelete: 'cascade' }),
+  assignedAt: timestamp('assigned_at').defaultNow().notNull(),
+}, (t) => [primaryKey({ columns: [t.roleId, t.groupId] })])
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
   userRoles: many(userRoles),
 }))
-export const rolesRelations = relations(roles, ({ many }) => ({
+export const rolesRelations = relations(roles, ({ one, many }) => ({
+  parent: one(roles, { fields: [roles.parentId], references: [roles.id], relationName: 'role_children' }),
+  children: many(roles, { relationName: 'role_children' }),
   userRoles: many(userRoles),
   rolePermissions: many(rolePermissions),
+  rolePermissionGroups: many(rolePermissionGroups),
 }))
 export const permissionsRelations = relations(permissions, ({ many }) => ({
   rolePermissions: many(rolePermissions),
+  permissionGroupItems: many(permissionGroupItems),
 }))
 export const userRolesRelations = relations(userRoles, ({ one }) => ({
   user: one(users, { fields: [userRoles.userId], references: [users.id] }),
@@ -67,10 +94,25 @@ export const rolePermissionsRelations = relations(rolePermissions, ({ one }) => 
   role: one(roles, { fields: [rolePermissions.roleId], references: [roles.id] }),
   permission: one(permissions, { fields: [rolePermissions.permissionId], references: [permissions.id] }),
 }))
+export const permissionGroupsRelations = relations(permissionGroups, ({ many }) => ({
+  permissionGroupItems: many(permissionGroupItems),
+  rolePermissionGroups: many(rolePermissionGroups),
+}))
+export const permissionGroupItemsRelations = relations(permissionGroupItems, ({ one }) => ({
+  group: one(permissionGroups, { fields: [permissionGroupItems.groupId], references: [permissionGroups.id] }),
+  permission: one(permissions, { fields: [permissionGroupItems.permissionId], references: [permissions.id] }),
+}))
+export const rolePermissionGroupsRelations = relations(rolePermissionGroups, ({ one }) => ({
+  role: one(roles, { fields: [rolePermissionGroups.roleId], references: [roles.id] }),
+  group: one(permissionGroups, { fields: [rolePermissionGroups.groupId], references: [permissionGroups.id] }),
+}))
 
 // ─── Client ───────────────────────────────────────────────────────────────────
 
 const client = postgres(env.DATABASE_URL)
 export const db = drizzle(client, {
-  schema: { users, roles, permissions, userRoles, rolePermissions },
+  schema: {
+    users, roles, permissions, userRoles, rolePermissions,
+    permissionGroups, permissionGroupItems, rolePermissionGroups,
+  },
 })

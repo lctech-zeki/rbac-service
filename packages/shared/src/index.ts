@@ -80,6 +80,7 @@ export const RoleSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   description: z.string().nullable(),
+  parentId: z.string().uuid().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 })
@@ -88,11 +89,17 @@ export type Role = z.infer<typeof RoleSchema>
 export const CreateRoleSchema = z.object({
   name: z.string().min(2).max(100),
   description: z.string().max(500).optional(),
+  parentId: z.string().uuid().optional(),
 })
 export type CreateRoleDto = z.infer<typeof CreateRoleSchema>
 
 export const UpdateRoleSchema = CreateRoleSchema.partial()
 export type UpdateRoleDto = z.infer<typeof UpdateRoleSchema>
+
+export const SetRoleParentSchema = z.object({
+  parentId: z.string().uuid(),
+})
+export type SetRoleParentDto = z.infer<typeof SetRoleParentSchema>
 
 // ─── Permission ───────────────────────────────────────────────────────────────
 
@@ -145,6 +152,31 @@ export const AssignPermissionSchema = z.object({
   permissionId: z.string().uuid(),
 })
 export type AssignPermissionDto = z.infer<typeof AssignPermissionSchema>
+
+// ─── Permission Group ─────────────────────────────────────────────────────────
+
+export const PermissionGroupSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+})
+export type PermissionGroup = z.infer<typeof PermissionGroupSchema>
+
+export const CreatePermissionGroupSchema = z.object({
+  name: z.string().min(2).max(100),
+  description: z.string().max(500).optional(),
+})
+export type CreatePermissionGroupDto = z.infer<typeof CreatePermissionGroupSchema>
+
+export const UpdatePermissionGroupSchema = CreatePermissionGroupSchema.partial()
+export type UpdatePermissionGroupDto = z.infer<typeof UpdatePermissionGroupSchema>
+
+export const AssignPermissionGroupSchema = z.object({
+  groupId: z.string().uuid(),
+})
+export type AssignPermissionGroupDto = z.infer<typeof AssignPermissionGroupSchema>
 
 // ─── API Envelope ─────────────────────────────────────────────────────────────
 
