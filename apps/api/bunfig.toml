@@ -1,0 +1,6 @@
+[test]
+# Coverage output format — text for terminal, lcov for CI reporting
+coverageReporter = ["text", "lcov"]
+# Threshold is checked when running: bun test --coverage
+# Enforced in CI via `bun run test:coverage`
+coverageThreshold = 0.7

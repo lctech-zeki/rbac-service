@@ -1,0 +1,74 @@
+# Copilot Progress Log
+# New sessions: READ THIS FIRST, then feature_list.json.
+# After each session: PREPEND a new entry.
+
+---
+
+## [2026-02-27] — Full scaffold complete (final stack)
+
+### Final tech stack
+- Runtime: Bun
+- API: Hono v4
+- Validation: Zod v3 (shared via packages/shared)
+- ORM: Drizzle ORM + postgres driver
+- Database: PostgreSQL 16
+- Cache: Redis 7 (ioredis)
+- Auth: JWT (jose) + Redis token deny-list
+- Frontend: Vue 3 + Vite + Pinia + Tailwind CSS
+- Schema visualization: CUE
+- Package manager: Bun workspaces
+
+### Completed this session
+- Monorepo structure: apps/api, apps/web, packages/shared
+- packages/shared: all Zod schemas with z.infer<> types
+- apps/api:
+  - src/env.ts — Zod env validation (Bun.env)
+  - src/db.ts — Drizzle schema (users, roles, permissions, user_roles, role_permissions) + DB client
+  - src/redis.ts — Redis client
+  - src/auth.ts — JWT sign/verify + bearer middleware + token revocation
+  - src/routes/auth.ts — register, login, refresh, logout
+  - src/routes/users.ts — full CRUD + role assignment
+  - src/routes/roles.ts — full CRUD + permission assignment
+  - src/routes/permissions.ts — full CRUD
+  - src/routes/authz.ts — permission check (Redis cached) + user permissions list
+  - src/app.ts — Hono factory with all routes mounted
+  - src/index.ts — Bun server entry
+  - drizzle.config.ts, package.json, tsconfig.json, Dockerfile, .env.example
+- apps/web:
+  - router/index.ts — Vue Router with auth guard
+  - stores/auth.store.ts — Pinia auth store with token refresh
+  - api/client.ts — Axios client with JWT interceptor
+  - All views: LoginView, AppLayout, UsersView, RolesView, PermissionsView
+  - package.json, tsconfig.json, vite.config.ts, index.html, Dockerfile, nginx.conf
+- cue/schema/user.cue, role.cue, permission.cue
+- cue/config/config.cue
+- .github/workflows/ci.yml
+- .github/copilot-instructions.md (updated for final stack)
+- README.md
+
+### Features marked passing
+- infra-001 through infra-005, ops-001, ops-002, ops-003
+
+### Next session — recommended starting point
+Run `make init` to bootstrap the environment, then pick `infra-006`:
+
+**Task: Run Drizzle migrations**
+1. `cd apps/api`
+2. `bunx drizzle-kit generate` — generates SQL migration files into `src/db/migrations/`
+3. `bunx drizzle-kit migrate` — applies migrations to PostgreSQL
+4. Verify with `make db-studio` that all 5 tables exist
+5. Mark `infra-006` as `"passing"` in feature_list.json
+6. Then do `infra-007` (seed.ts)
+
+### Environment
+- API: http://localhost:3000/api/v1
+- Web: http://localhost:8080
+- DB: localhost:5432 (user: rbac, pass: rbac_secret, db: rbac_db)
+- Redis: localhost:6379
+- Run `make init` to start everything
+
+### Known gaps (implement in upcoming sessions)
+- No tests written yet (all test features are "failing") — start with auth-001
+- DB seed script not yet created — infra-007
+- Create/edit modals in web views — web-003, web-004
+- Redis cache invalidation on role/permission change not fully wired — authz-002

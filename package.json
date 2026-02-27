@@ -1,0 +1,27 @@
+{
+  "name": "rbac-service",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Role-Based Access Control — monorepo (Hono API + Vue 3 Web + CUE schemas)",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "build": "bun run --filter '*' build",
+    "test": "bun run --filter '*' test",
+    "test:coverage": "bun run --filter '*' test:coverage",
+    "lint": "oxlint apps/api/src apps/web/src packages/shared/src --config .oxlintrc.json",
+    "typecheck": "bun run --filter '*' typecheck",
+    "db:generate": "bun run --filter api db:generate",
+    "db:migrate": "bun run --filter api db:migrate",
+    "db:seed": "bun run --filter api db:seed",
+    "cue:vet": "cue vet ./cue/...",
+    "cue:export": "cue export ./cue/schema/... -o docs/schema.json"
+  },
+  "devDependencies": {
+    "oxlint": "^1.49.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "bun": ">=3.0.0"
+  }
+}

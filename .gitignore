@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+bun.lockb
+
+# Build outputs
+dist/
+build/
+.output/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Drizzle generated migrations
+apps/api/src/db/migrations/
+
+# Vue / Vite
+apps/web/.vite/
+apps/web/dist/
+
+# CUE generated
+docs/schema.json
+
+# TypeScript build info
+*.tsbuildinfo

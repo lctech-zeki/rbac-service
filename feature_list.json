@@ -1,0 +1,170 @@
+{
+  "project": "rbac-service",
+  "stack": "Bun + Hono + Zod + Drizzle ORM + Vue 3 + CUE",
+  "instructions": "Each session: (1) read copilot-progress.txt, (2) pick ONE 'failing' feature, (3) implement + test, (4) mark 'passing', (5) commit, (6) update copilot-progress.txt.",
+  "features": [
+    {
+      "id": "infra-001", "category": "Infrastructure",
+      "name": "Monorepo scaffold",
+      "description": "Bun workspaces, package.json, Makefile, docker-compose, .gitignore, devcontainer, CI",
+      "status": "passing", "tests": []
+    },
+    {
+      "id": "infra-002", "category": "Infrastructure",
+      "name": "Shared Zod schemas",
+      "description": "packages/shared/src/index.ts — all request/response schemas with z.infer<> types",
+      "status": "passing", "tests": []
+    },
+    {
+      "id": "infra-003", "category": "Infrastructure",
+      "name": "API scaffold",
+      "description": "env.ts, db.ts, redis.ts, auth.ts, app.ts, index.ts, all route files",
+      "status": "passing", "tests": []
+    },
+    {
+      "id": "infra-004", "category": "Infrastructure",
+      "name": "Vue 3 web scaffold",
+      "description": "router, auth store, api client, layout, all view stubs",
+      "status": "passing", "tests": []
+    },
+    {
+      "id": "infra-005", "category": "Infrastructure",
+      "name": "CUE schemas",
+      "description": "cue/schema/user.cue, role.cue, permission.cue; cue/config/config.cue",
+      "status": "passing", "tests": ["cue vet ./cue/... passes"]
+    },
+    {
+      "id": "infra-006", "category": "Infrastructure",
+      "name": "Drizzle migrations",
+      "description": "Run drizzle-kit generate then drizzle-kit migrate to create initial schema",
+      "status": "failing",
+      "tests": ["bun run --filter api db:migrate succeeds", "all 5 tables exist in DB"]
+    },
+    {
+      "id": "infra-007", "category": "Infrastructure",
+      "name": "DB seed",
+      "description": "apps/api/src/db/seed.ts — seed admin user, default roles, permissions",
+      "status": "failing",
+      "tests": ["bun run --filter api db:seed runs without error"]
+    },
+    {
+      "id": "infra-008", "category": "Infrastructure",
+      "name": "Health check",
+      "description": "GET /api/v1/healthz — checks DB and Redis connectivity",
+      "status": "failing",
+      "tests": ["GET /api/v1/healthz returns {status:'ok', db:'ok', redis:'ok'}"]
+    },
+    {
+      "id": "auth-001", "category": "Authentication",
+      "name": "Register + Login tests",
+      "description": "Write bun test for POST /auth/register and POST /auth/login",
+      "status": "failing",
+      "tests": ["apps/api/src/routes/auth.test.ts passes"]
+    },
+    {
+      "id": "auth-002", "category": "Authentication",
+      "name": "Refresh + Logout tests",
+      "description": "Write bun test for POST /auth/refresh and POST /auth/logout",
+      "status": "failing",
+      "tests": ["apps/api/src/routes/auth.test.ts covers refresh + logout"]
+    },
+    {
+      "id": "user-001", "category": "User Management",
+      "name": "Users CRUD tests",
+      "description": "Write bun test covering GET/POST/PATCH/DELETE /users",
+      "status": "failing",
+      "tests": ["apps/api/src/routes/users.test.ts passes"]
+    },
+    {
+      "id": "user-002", "category": "User Management",
+      "name": "User role assignment tests",
+      "description": "Write bun test for POST/DELETE /users/:id/roles",
+      "status": "failing",
+      "tests": ["user role assignment tests pass"]
+    },
+    {
+      "id": "role-001", "category": "Role Management",
+      "name": "Roles CRUD tests",
+      "description": "Write bun test covering GET/POST/PATCH/DELETE /roles",
+      "status": "failing",
+      "tests": ["apps/api/src/routes/roles.test.ts passes"]
+    },
+    {
+      "id": "role-002", "category": "Role Management",
+      "name": "Role permission assignment tests",
+      "description": "Write bun test for POST/DELETE /roles/:id/permissions",
+      "status": "failing",
+      "tests": ["role permission assignment tests pass"]
+    },
+    {
+      "id": "perm-001", "category": "Permission Management",
+      "name": "Permissions CRUD tests",
+      "description": "Write bun test covering GET/POST/PATCH/DELETE /permissions",
+      "status": "failing",
+      "tests": ["apps/api/src/routes/permissions.test.ts passes"]
+    },
+    {
+      "id": "authz-001", "category": "Authorization",
+      "name": "Permission check tests",
+      "description": "Write bun test for POST /authz/check (allowed + denied cases)",
+      "status": "failing",
+      "tests": ["apps/api/src/routes/authz.test.ts passes"]
+    },
+    {
+      "id": "authz-002", "category": "Authorization",
+      "name": "Redis cache validation",
+      "description": "Confirm permission check result is cached in Redis and invalidated on role change",
+      "status": "failing",
+      "tests": ["cache hit test passes", "cache invalidation on role change"]
+    },
+    {
+      "id": "web-001", "category": "Web (Vue 3)",
+      "name": "LoginView tests",
+      "description": "Vitest + @vue/test-utils for LoginView.vue form submit and error display",
+      "status": "failing",
+      "tests": ["apps/web/src/views/auth/LoginView.test.ts passes"]
+    },
+    {
+      "id": "web-002", "category": "Web (Vue 3)",
+      "name": "UsersView tests",
+      "description": "Vitest for UsersView.vue — renders table, pagination, delete",
+      "status": "failing",
+      "tests": ["apps/web/src/views/users/UsersView.test.ts passes"]
+    },
+    {
+      "id": "web-003", "category": "Web (Vue 3)",
+      "name": "Create/Edit modals",
+      "description": "Add create and edit modal dialogs to UsersView, RolesView, PermissionsView",
+      "status": "failing",
+      "tests": ["modal opens, submits, closes correctly"]
+    },
+    {
+      "id": "web-004", "category": "Web (Vue 3)",
+      "name": "Role assignment UI",
+      "description": "In UserEditModal: chip list of roles with assign/revoke buttons",
+      "status": "failing",
+      "tests": ["role chips render", "assign/revoke calls API"]
+    },
+    {
+      "id": "ops-001", "category": "Operations",
+      "name": "API Dockerfile",
+      "description": "Multi-stage Bun build; non-root user; image < 200MB",
+      "status": "passing",
+      "tests": ["docker build -f apps/api/Dockerfile . succeeds"]
+    },
+    {
+      "id": "ops-002", "category": "Operations",
+      "name": "Web Dockerfile",
+      "description": "Vite build → nginx:alpine with security headers",
+      "status": "passing",
+      "tests": ["docker build -f apps/web/Dockerfile . succeeds"]
+    },
+    {
+      "id": "ops-003", "category": "Operations",
+      "name": "GitHub Actions CI",
+      "description": "Lint + typecheck + test + build on every PR for api, web, shared",
+      "status": "passing",
+      "tests": ["CI passes on clean commit"]
+    }
+  ]
+}
