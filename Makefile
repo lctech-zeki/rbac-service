@@ -1,10 +1,11 @@
-.PHONY: help install dev build test lint typecheck db-up db-down db-migrate db-seed cue-vet docker-build
+.PHONY: help install dev build test test-api test-web test-coverage lint typecheck \
+        db-up db-down db-migrate db-seed cue-vet docker-build
 
 DOCKER_COMPOSE = docker compose
 BUN = bun
 
 help: ## Show this help
-@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
 install: ## Install all dependencies
 $(BUN) install
@@ -23,7 +24,7 @@ $(BUN) run --filter web dev
 build: ## Build all packages
 $(BUN) run build
 
-test: ## Run all tests
+test: ## Run all tests (no coverage threshold)
 $(BUN) run test
 
 test-api: ## Run API tests (Bun test runner)
@@ -32,7 +33,16 @@ $(BUN) run --filter api test
 test-web: ## Run web tests (Vitest)
 $(BUN) run --filter web test
 
-lint: ## Lint all packages
+test-coverage: ## Run all tests with coverage — enforces ≥70% threshold
+$(BUN) run test:coverage
+
+test-coverage-api: ## Run API tests with coverage
+$(BUN) run --filter api test:coverage
+
+test-coverage-web: ## Run web tests with coverage
+$(BUN) run --filter web test:coverage
+
+lint: ## Lint all source code with oxlint
 $(BUN) run lint
 
 typecheck: ## Type-check all packages
@@ -60,8 +70,8 @@ cue-export: ## Export CUE schemas to JSON
 cue export ./cue/schema/... -o docs/schema.json
 
 docker-build: ## Build Docker images
-docker build -f apps/api/Dockerfile -t rbac-api:latest apps/api
-docker build -f apps/web/Dockerfile -t rbac-web:latest apps/web
+docker build -f apps/api/Dockerfile -t rbac-api:latest .
+docker build -f apps/web/Dockerfile -t rbac-web:latest .
 
 init: install db-up db-migrate db-seed ## Full project initialisation
 @echo "✅ rbac-service is ready. Run 'make dev' to start."

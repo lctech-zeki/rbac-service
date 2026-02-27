@@ -107,12 +107,76 @@ export const CreateRoleSchema = z.object({
 export type CreateRoleDto = z.infer<typeof CreateRoleSchema>
 ```
 
-## Development Workflow
-1. `make init` — first-time bootstrap
-2. `make dev` — start all services
-3. Pick ONE `"failing"` feature from `feature_list.json`
-4. Implement + test + mark `"passing"` + commit
-5. Update `copilot-progress.txt`
+## Development Workflow — TDD
+Every feature in `feature_list.json` **must** follow the Red → Green → Refactor cycle:
+
+1. **Red** — Write a failing test that describes the expected behaviour
+2. **Green** — Write the minimum code to make the test pass
+3. **Refactor** — Clean up code; all tests must still pass
+4. Verify coverage: `make test-coverage` — must stay **≥ 70%**
+5. Lint: `make lint` — must pass with zero errors
+6. Mark feature `"passing"` in `feature_list.json`, commit, update `copilot-progress.txt`
+
+### Test file locations
+| App | Unit tests | Convention |
+|-----|-----------|------------|
+| API | `apps/api/src/routes/*.test.ts` | Co-located with the route file |
+| Web | `apps/web/src/**/*.test.ts` | Co-located with the component/store |
+
+### Test commands
+| Command | What it does |
+|---------|-------------|
+| `make test` | Run all tests (fast, no threshold) |
+| `make test-coverage` | Run with coverage — **fails if < 70%** |
+| `make test-coverage-api` | API coverage only |
+| `make test-coverage-web` | Web coverage only |
+
+### API test pattern (Bun test)
+```typescript
+// apps/api/src/routes/auth.test.ts
+import { describe, it, expect, beforeAll } from 'bun:test'
+import app from '../app'
+
+describe('POST /api/v1/auth/register', () => {
+  it('returns 201 with user data on success', async () => {
+    const res = await app.request('/api/v1/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'test@example.com', username: 'testuser', password: 'password123' }),
+    })
+    expect(res.status).toBe(201)
+    const body = await res.json()
+    expect(body.data.email).toBe('test@example.com')
+  })
+
+  it('returns 409 when email already exists', async () => {
+    // … arrange → act → assert
+  })
+})
+```
+
+### Web test pattern (Vitest + @vue/test-utils)
+```typescript
+// apps/web/src/views/auth/LoginView.test.ts
+import { describe, it, expect, vi } from 'vitest'
+import { mount } from '@vue/test-utils'
+import LoginView from './LoginView.vue'
+
+describe('LoginView', () => {
+  it('renders email and password fields', () => {
+    const wrapper = mount(LoginView, { global: { plugins: [createTestingPinia()] } })
+    expect(wrapper.find('input[type="email"]').exists()).toBe(true)
+    expect(wrapper.find('input[type="password"]').exists()).toBe(true)
+  })
+})
+```
+
+## Linting — oxlint
+All code **must** pass `make lint` before committing. oxlint is the sole linter for this project.
+
+- Config: `.oxlintrc.json` (root)
+- Run: `make lint` (lints `apps/api/src`, `apps/web/src`, `packages/shared/src`)
+- CI blocks merge on any oxlint error
 
 ## Commands
 | Command | Description |
@@ -120,8 +184,11 @@ export type CreateRoleDto = z.infer<typeof CreateRoleSchema>
 | `make dev` | Start everything |
 | `make dev-api` | API only (hot reload) |
 | `make dev-web` | Web only |
-| `make test-api` | Bun tests |
-| `make test-web` | Vitest |
+| `make lint` | oxlint — all source dirs |
+| `make test` | Run all tests |
+| `make test-coverage` | Tests + coverage ≥70% enforcement |
+| `make test-coverage-api` | API coverage |
+| `make test-coverage-web` | Web coverage |
 | `make db-migrate` | Run Drizzle migrations |
 | `make db-studio` | Open Drizzle Studio |
 | `make cue-vet` | Validate CUE schemas |
@@ -132,3 +199,6 @@ export type CreateRoleDto = z.infer<typeof CreateRoleSchema>
 - Do not call DB directly in routes — keep Drizzle calls in route handlers, not inline in business logic
 - Do not duplicate types — always import from `@rbac/shared`
 - Do not commit `.env` files
+- Do not skip writing tests — follow TDD for every feature
+- Do not commit code that reduces coverage below 70%
+- Do not use `eslint` — this project uses `oxlint`

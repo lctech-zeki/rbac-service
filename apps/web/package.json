@@ -8,8 +8,9 @@
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "vue-tsc --noEmit",
-    "lint": "bunx eslint src --ext .ts,.vue"
+    "lint": "oxlint src/ --config ../../.oxlintrc.json"
   },
   "dependencies": {
     "@rbac/shared": "workspace:*",
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.1",
     "@vitejs/plugin-vue": "^5.2.0",
+    "@vitest/coverage-v8": "^4.0.16",
     "@vue/test-utils": "^2.4.6",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.8.0",

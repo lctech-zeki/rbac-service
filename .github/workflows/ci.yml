@@ -10,6 +10,18 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    name: Lint (oxlint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+      - name: oxlint
+        run: bun run lint
+
   api:
     name: API (Bun + Hono + Drizzle)
     runs-on: ubuntu-latest
@@ -46,8 +58,6 @@ jobs:
         working-directory: .
       - name: Typecheck
         run: bun run typecheck
-      - name: Lint
-        run: bun run lint
       - name: Run migrations
         run: bun run db:migrate
         env:
@@ -56,8 +66,8 @@ jobs:
           JWT_SECRET: ci-test-secret-at-least-32-characters
           JWT_EXPIRES_IN: 15m
           JWT_REFRESH_EXPIRES_IN: 7d
-      - name: Test
-        run: bun test
+      - name: Test with coverage (≥70%)
+        run: bun run test:coverage
         env:
           DATABASE_URL: postgresql://rbac:rbac_secret@localhost:5432/rbac_db
           REDIS_URL: redis://localhost:6379
@@ -82,8 +92,8 @@ jobs:
         working-directory: .
       - name: Typecheck
         run: bun run typecheck
-      - name: Test
-        run: bun run test
+      - name: Test with coverage (≥70%)
+        run: bun run test:coverage
       - name: Build
         run: bun run build
 
