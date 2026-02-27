@@ -1,0 +1,272 @@
+{
+  "project": "rbac-service",
+  "description": "RBAC monorepo — NestJS API + Vue 3 Web + CUE schemas. Feature tracking for incremental Copilot-driven development.",
+  "instructions": "Each coding session: (1) read this file + copilot-progress.txt, (2) pick ONE 'failing' feature, (3) implement + test it, (4) mark 'passing', (5) commit, (6) update copilot-progress.txt.",
+  "features": [
+    {
+      "id": "infra-001", "category": "Infrastructure",
+      "name": "pnpm monorepo bootstrap",
+      "description": "package.json workspaces, pnpm-workspace.yaml, root tsconfig, .gitignore, Makefile",
+      "status": "passing", "tests": []
+    },
+    {
+      "id": "infra-002", "category": "Infrastructure",
+      "name": "Docker Compose local environment",
+      "description": "PostgreSQL + Redis + api + web services with health-checks",
+      "status": "passing", "tests": ["docker compose up --wait exits 0"]
+    },
+    {
+      "id": "infra-003", "category": "Infrastructure",
+      "name": "Prisma schema + migrations",
+      "description": "User, Role, Permission, UserRole, RolePermission models; initial migration",
+      "status": "passing", "tests": ["pnpm --filter api run db:migrate succeeds"]
+    },
+    {
+      "id": "infra-004", "category": "Infrastructure",
+      "name": "NestJS app bootstrap",
+      "description": "main.ts, AppModule, ConfigModule, PrismaModule, health-check endpoint",
+      "status": "passing", "tests": ["GET /healthz returns 200"]
+    },
+    {
+      "id": "infra-005", "category": "Infrastructure",
+      "name": "Vue 3 + Vite app bootstrap",
+      "description": "main.ts, App.vue, router, Pinia, Tailwind CSS, basic layout",
+      "status": "passing", "tests": ["pnpm --filter web run build succeeds"]
+    },
+    {
+      "id": "infra-006", "category": "Infrastructure",
+      "name": "CUE schema files",
+      "description": "cue/schema/user.cue, role.cue, permission.cue; cue/config/config.cue; cue vet passes",
+      "status": "passing", "tests": ["cue vet ./cue/... succeeds"]
+    },
+    {
+      "id": "infra-007", "category": "Infrastructure",
+      "name": "Shared types package",
+      "description": "packages/shared with User, Role, Permission, PaginatedResponse, ApiError types",
+      "status": "passing", "tests": ["pnpm --filter shared run build succeeds"]
+    },
+    {
+      "id": "infra-008", "category": "Infrastructure",
+      "name": "GitHub Actions CI",
+      "description": ".github/workflows/ci.yml — lint, typecheck, test, build on every PR",
+      "status": "passing", "tests": ["CI passes on clean commit"]
+    },
+    {
+      "id": "auth-001", "category": "Authentication",
+      "name": "User registration",
+      "description": "POST /api/v1/auth/register — validate input, hash password (bcrypt), persist User",
+      "status": "failing",
+      "tests": ["TestRegister_Success", "TestRegister_DuplicateEmail", "TestRegister_WeakPassword"]
+    },
+    {
+      "id": "auth-002", "category": "Authentication",
+      "name": "Login endpoint",
+      "description": "POST /api/v1/auth/login — email+password → JWT access + refresh tokens",
+      "status": "failing",
+      "tests": ["TestLogin_Success", "TestLogin_WrongPassword", "TestLogin_NotFound"]
+    },
+    {
+      "id": "auth-003", "category": "Authentication",
+      "name": "JWT middleware",
+      "description": "JwtStrategy + JwtAuthGuard; inject user into request context",
+      "status": "failing",
+      "tests": ["TestJWT_Valid", "TestJWT_Expired", "TestJWT_Missing"]
+    },
+    {
+      "id": "auth-004", "category": "Authentication",
+      "name": "Refresh token",
+      "description": "POST /api/v1/auth/refresh — rotate refresh token, issue new access token",
+      "status": "failing",
+      "tests": ["TestRefresh_Success", "TestRefresh_Expired"]
+    },
+    {
+      "id": "auth-005", "category": "Authentication",
+      "name": "Logout + token revocation",
+      "description": "POST /api/v1/auth/logout — add token JTI to Redis deny-list",
+      "status": "failing",
+      "tests": ["TestLogout_Success", "TestLogout_RevokedTokenRejected"]
+    },
+    {
+      "id": "auth-006", "category": "Authentication",
+      "name": "Vue login page",
+      "description": "LoginView.vue — email/password form, calls auth API, stores tokens in Pinia",
+      "status": "failing",
+      "tests": ["LoginView renders", "LoginView submits correctly"]
+    },
+    {
+      "id": "user-001", "category": "User Management",
+      "name": "Create user (admin)",
+      "description": "POST /api/v1/users — admin only; validate, hash password, persist",
+      "status": "failing",
+      "tests": ["TestCreateUser_Success", "TestCreateUser_Duplicate", "TestCreateUser_Forbidden"]
+    },
+    {
+      "id": "user-002", "category": "User Management",
+      "name": "Get user by ID",
+      "description": "GET /api/v1/users/:id — returns User without passwordHash",
+      "status": "failing",
+      "tests": ["TestGetUser_Found", "TestGetUser_NotFound"]
+    },
+    {
+      "id": "user-003", "category": "User Management",
+      "name": "List users (paginated)",
+      "description": "GET /api/v1/users?page=1&limit=20&search= — returns PaginatedResponse<User>",
+      "status": "failing",
+      "tests": ["TestListUsers_Pagination", "TestListUsers_Search"]
+    },
+    {
+      "id": "user-004", "category": "User Management",
+      "name": "Update user",
+      "description": "PATCH /api/v1/users/:id — update username/email",
+      "status": "failing",
+      "tests": ["TestUpdateUser_Success", "TestUpdateUser_NotFound"]
+    },
+    {
+      "id": "user-005", "category": "User Management",
+      "name": "Delete user (soft delete)",
+      "description": "DELETE /api/v1/users/:id — sets deletedAt",
+      "status": "failing",
+      "tests": ["TestDeleteUser_Success", "TestDeleteUser_NotFound"]
+    },
+    {
+      "id": "user-006", "category": "User Management",
+      "name": "Vue users list page",
+      "description": "UsersView.vue — data table with search, pagination, actions (view/edit/delete)",
+      "status": "failing",
+      "tests": ["UsersView renders table", "UsersView paginates"]
+    },
+    {
+      "id": "user-007", "category": "User Management",
+      "name": "Vue user detail/edit modal",
+      "description": "UserEditModal.vue — form to update username/email; role assignment chip list",
+      "status": "failing",
+      "tests": ["UserEditModal renders", "UserEditModal submits"]
+    },
+    {
+      "id": "role-001", "category": "Role Management",
+      "name": "Create role",
+      "description": "POST /api/v1/roles — unique name, optional description",
+      "status": "failing",
+      "tests": ["TestCreateRole_Success", "TestCreateRole_Duplicate"]
+    },
+    {
+      "id": "role-002", "category": "Role Management",
+      "name": "Get role by ID",
+      "description": "GET /api/v1/roles/:id — includes assigned permissions",
+      "status": "failing",
+      "tests": ["TestGetRole_Found", "TestGetRole_NotFound"]
+    },
+    {
+      "id": "role-003", "category": "Role Management",
+      "name": "List roles",
+      "description": "GET /api/v1/roles — pagination, includes permission count",
+      "status": "failing",
+      "tests": ["TestListRoles"]
+    },
+    {
+      "id": "role-004", "category": "Role Management",
+      "name": "Update role",
+      "description": "PATCH /api/v1/roles/:id — update name/description",
+      "status": "failing",
+      "tests": ["TestUpdateRole_Success"]
+    },
+    {
+      "id": "role-005", "category": "Role Management",
+      "name": "Delete role",
+      "description": "DELETE /api/v1/roles/:id — fails if users are still assigned",
+      "status": "failing",
+      "tests": ["TestDeleteRole_Success", "TestDeleteRole_HasUsers"]
+    },
+    {
+      "id": "role-006", "category": "Role Management",
+      "name": "Vue roles page",
+      "description": "RolesView.vue — table + create/edit/delete modal with permission assignment",
+      "status": "failing",
+      "tests": ["RolesView renders"]
+    },
+    {
+      "id": "perm-001", "category": "Permission Management",
+      "name": "Create permission",
+      "description": "POST /api/v1/permissions — unique {resource, action} pair",
+      "status": "failing",
+      "tests": ["TestCreatePermission_Success", "TestCreatePermission_Duplicate"]
+    },
+    {
+      "id": "perm-002", "category": "Permission Management",
+      "name": "List permissions",
+      "description": "GET /api/v1/permissions — filter by resource",
+      "status": "failing",
+      "tests": ["TestListPermissions", "TestListPermissions_FilterByResource"]
+    },
+    {
+      "id": "perm-003", "category": "Permission Management",
+      "name": "Update / delete permission",
+      "description": "PATCH + DELETE /api/v1/permissions/:id — delete fails if assigned to a role",
+      "status": "failing",
+      "tests": ["TestUpdatePermission", "TestDeletePermission_AssignedToRole"]
+    },
+    {
+      "id": "perm-004", "category": "Permission Management",
+      "name": "Vue permissions page",
+      "description": "PermissionsView.vue — grouped by resource, create/edit/delete",
+      "status": "failing",
+      "tests": ["PermissionsView renders"]
+    },
+    {
+      "id": "assign-001", "category": "Assignment",
+      "name": "Assign/revoke permission to role",
+      "description": "POST/DELETE /api/v1/roles/:id/permissions/:permId — idempotent",
+      "status": "failing",
+      "tests": ["TestAssignPermission", "TestRevokePermission"]
+    },
+    {
+      "id": "assign-002", "category": "Assignment",
+      "name": "Assign/revoke role to user",
+      "description": "POST/DELETE /api/v1/users/:id/roles/:roleId — idempotent",
+      "status": "failing",
+      "tests": ["TestAssignRole", "TestRevokeRole"]
+    },
+    {
+      "id": "authz-001", "category": "Authorization",
+      "name": "Permission check endpoint",
+      "description": "POST /api/v1/authz/check — {userId, resource, action} → {allowed: bool}",
+      "status": "failing",
+      "tests": ["TestCheck_Allowed", "TestCheck_Denied"]
+    },
+    {
+      "id": "authz-002", "category": "Authorization",
+      "name": "Permission cache (Redis)",
+      "description": "Cache permission check in Redis 5-min TTL; invalidate on role/permission change",
+      "status": "failing",
+      "tests": ["TestCache_Hit", "TestCache_Invalidation"]
+    },
+    {
+      "id": "authz-003", "category": "Authorization",
+      "name": "PermissionsGuard NestJS decorator",
+      "description": "@RequirePermissions('users:read') decorator + PermissionsGuard",
+      "status": "failing",
+      "tests": ["TestPermissionsGuard_Allowed", "TestPermissionsGuard_Forbidden"]
+    },
+    {
+      "id": "ops-001", "category": "Operations",
+      "name": "API Dockerfile (multi-stage)",
+      "description": "Builder + distroless final image; non-root user; < 150MB",
+      "status": "failing",
+      "tests": ["docker build -f apps/api/Dockerfile succeeds"]
+    },
+    {
+      "id": "ops-002", "category": "Operations",
+      "name": "Web Dockerfile (nginx)",
+      "description": "Vite build → nginx:alpine; security headers",
+      "status": "failing",
+      "tests": ["docker build -f apps/web/Dockerfile succeeds"]
+    },
+    {
+      "id": "ops-003", "category": "Operations",
+      "name": "Swagger / OpenAPI docs",
+      "description": "@nestjs/swagger annotations on all controllers; GET /api/docs",
+      "status": "failing",
+      "tests": ["GET /api/docs returns 200"]
+    }
+  ]
+}

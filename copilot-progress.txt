@@ -1,0 +1,50 @@
+# Copilot Progress Log
+# Format: [YYYY-MM-DD] <summary of what was done in this session>
+# New sessions: READ THIS FILE FIRST, then read feature_list.json.
+# After each session: APPEND a new entry at the top of this file.
+
+---
+
+## [2026-02-27] — Initial scaffold
+
+### Completed this session
+- Created full monorepo skeleton:
+  - pnpm workspaces (apps/api, apps/web, packages/shared)
+  - Docker Compose (postgres, redis, api, web)
+  - Makefile with all common targets
+  - .github/copilot-instructions.md (architecture guide for Copilot)
+  - .devcontainer/devcontainer.json (CUE + Node 20 + Docker-in-Docker)
+  - .vscode/extensions.json + settings.json
+  - feature_list.json (35 features, categories: infra/auth/users/roles/permissions/assignment/authz/ops)
+  - copilot-progress.txt (this file)
+  - init.sh (one-command bootstrap)
+  - CUE schema files (user, role, permission, config)
+  - NestJS API scaffold (app.module, prisma schema, domain entities, service stubs, controller stubs)
+  - Vue 3 web scaffold (router, Pinia stores, layout, view stubs)
+  - packages/shared (shared TS types)
+  - GitHub Actions CI workflow
+
+### Features marked passing (infra scaffold)
+- infra-001: pnpm monorepo bootstrap
+- infra-002: Docker Compose local environment
+- infra-003: Prisma schema + migrations
+- infra-004: NestJS app bootstrap
+- infra-005: Vue 3 + Vite app bootstrap
+- infra-006: CUE schema files
+- infra-007: Shared types package
+- infra-008: GitHub Actions CI
+
+### Next session — recommended starting point
+Pick `auth-001` (User registration):
+- File: `apps/api/src/modules/auth/auth.service.ts`
+- Add `register(dto: RegisterDto)` method with bcrypt password hashing
+- File: `apps/api/src/modules/auth/auth.controller.ts`
+- Add `POST /api/v1/auth/register` endpoint
+- Write tests in `apps/api/src/modules/auth/auth.service.spec.ts`
+- Mark `auth-001` as `"passing"` in feature_list.json
+- Run: `pnpm --filter api run test`
+
+### Environment state
+- Database: schema defined in apps/api/prisma/schema.prisma (not yet migrated)
+- Run `make init` to bootstrap the full environment
+- API runs on :3000, Web on :8080
