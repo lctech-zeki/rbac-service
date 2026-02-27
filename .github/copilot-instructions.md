@@ -20,17 +20,17 @@ rbac-service/
 ## Final Tech Stack
 | Layer        | Technology                                       |
 |--------------|--------------------------------------------------|
-| Runtime      | **Bun** ≥ 1.1                                    |
-| API          | **Hono** v4                                      |
-| Validation   | **Zod** v3 (shared via `@rbac/shared`)           |
-| ORM          | **Drizzle ORM** + `postgres` driver              |
-| Database     | PostgreSQL 16                                    |
-| Cache        | Redis 7 (ioredis)                                |
+| Runtime      | **Bun** ≥ 3.0                                    |
+| API          | **Hono** v4.12                                   |
+| Validation   | **Zod** v4 (shared via `@rbac/shared`)           |
+| ORM          | **Drizzle ORM** v0.44 + `postgres` driver        |
+| Database     | PostgreSQL 17                                    |
+| Cache        | Redis 7 (ioredis v5)                             |
 | Auth         | JWT via `jose` + Redis token deny-list           |
-| Frontend     | **Vue 3** + Vite + Pinia + Vue Router            |
-| Styling      | Tailwind CSS                                     |
+| Frontend     | **Vue 3.5** + Vite 7 + Pinia 3 + Vue Router 5   |
+| Styling      | Tailwind CSS v4                                  |
 | Schema vis   | **CUE** (cuelang.org)                            |
-| Testing      | Bun test (API) · Vitest (Web)                    |
+| Testing      | Bun test (API) · Vitest v4 (Web)                 |
 | Package mgr  | Bun workspaces                                   |
 | CI           | GitHub Actions                                   |
 

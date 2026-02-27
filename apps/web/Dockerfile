@@ -1,4 +1,4 @@
-FROM oven/bun:1 AS builder
+FROM oven/bun:3 AS builder
 WORKDIR /app
 COPY package.json bun.lockb* ./
 COPY packages/shared ./packages/shared

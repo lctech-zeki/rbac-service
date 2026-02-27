@@ -17,9 +17,9 @@
     "cue:export": "cue export ./cue/schema/... -o docs/schema.json"
   },
   "devDependencies": {
-    "typescript": "^5.6.0"
+    "typescript": "^5.8.0"
   },
   "engines": {
-    "bun": ">=1.1.0"
+    "bun": ">=3.0.0"
   }
 }

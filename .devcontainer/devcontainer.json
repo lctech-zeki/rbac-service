@@ -1,5 +1,5 @@
 {
-  "image": "oven/bun:1",
+  "image": "oven/bun:latest",
   "name": "rbac-service",
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},

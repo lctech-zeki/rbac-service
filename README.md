@@ -6,13 +6,14 @@
 
 | Layer | Technology |
 |-------|-----------|
-| Runtime | **Bun** |
-| API | **Hono** |
-| Validation | **Zod** |
-| ORM | **Drizzle ORM** |
-| Database | PostgreSQL |
-| Cache | Redis |
-| Frontend | **Vue 3** + Vite + Pinia |
+| Runtime | **Bun 3** |
+| API | **Hono 4.12** |
+| Validation | **Zod 4** |
+| ORM | **Drizzle ORM 0.44** |
+| Database | PostgreSQL 17 |
+| Cache | Redis 7 (ioredis 5) |
+| Frontend | **Vue 3.5** + Vite 7 + Pinia 3 + Vue Router 5 |
+| Styling | **Tailwind CSS v4** |
 | Schema vis | **CUE** |
 
 ## Monorepo
