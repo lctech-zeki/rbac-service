@@ -2,26 +2,24 @@
   "name": "rbac-service",
   "version": "0.0.1",
   "private": true,
-  "description": "Role-Based Access Control — monorepo (NestJS API + Vue 3 Web + CUE schemas)",
+  "description": "Role-Based Access Control — monorepo (Hono API + Vue 3 Web + CUE schemas)",
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "pnpm --parallel -r run dev",
-    "build": "pnpm -r run build",
-    "test": "pnpm -r run test",
-    "lint": "pnpm -r run lint",
-    "format": "pnpm -r run format",
-    "typecheck": "pnpm -r run typecheck",
-    "db:generate": "pnpm --filter api run db:generate",
-    "db:migrate": "pnpm --filter api run db:migrate",
-    "db:seed": "pnpm --filter api run db:seed",
+    "dev": "bun run --filter '*' dev",
+    "build": "bun run --filter '*' build",
+    "test": "bun run --filter '*' test",
+    "lint": "bun run --filter '*' lint",
+    "typecheck": "bun run --filter '*' typecheck",
+    "db:generate": "bun run --filter api db:generate",
+    "db:migrate": "bun run --filter api db:migrate",
+    "db:seed": "bun run --filter api db:seed",
     "cue:vet": "cue vet ./cue/...",
     "cue:export": "cue export ./cue/schema/... -o docs/schema.json"
   },
   "devDependencies": {
-    "typescript": "^5.4.5"
+    "typescript": "^5.6.0"
   },
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=9.0.0"
-  },
-  "packageManager": "pnpm@9.12.0"
+    "bun": ">=1.1.0"
+  }
 }

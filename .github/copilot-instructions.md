@@ -1,57 +1,61 @@
 # GitHub Copilot Instructions — rbac-service
 
 ## Project Overview
-This is a **Role-Based Access Control (RBAC) microservice** monorepo with a full-stack TypeScript architecture.
+A **Role-Based Access Control (RBAC) microservice** monorepo with a full-stack TypeScript architecture.
 
 ## Monorepo Structure
 ```
 rbac-service/
 ├── apps/
-│   ├── api/        # NestJS backend — REST API + business logic
+│   ├── api/        # Hono backend — REST API (runs on Bun)
 │   └── web/        # Vue 3 frontend — admin dashboard
 ├── packages/
-│   └── shared/     # Shared TypeScript types used by both apps
+│   └── shared/     # Shared Zod schemas + inferred TS types
 ├── cue/            # CUE language schemas for config & data model visualization
 ├── feature_list.json    # Incremental feature tracking (agent harness)
 └── copilot-progress.txt # Session handoff log
 ```
 
 ## Tech Stack
-| Layer       | Technology                          |
-|-------------|-------------------------------------|
-| Backend     | NestJS (TypeScript), Prisma, JWT    |
-| Frontend    | Vue 3, Vite, Pinia, Vue Router      |
-| Database    | PostgreSQL (via Prisma ORM)         |
-| Cache       | Redis (ioredis)                     |
-| Schema vis  | CUE (cuelang.org)                   |
-| Testing     | Jest (API), Vitest (Web)            |
-| Package mgr | pnpm workspaces                     |
+| Layer       | Technology                                  |
+|-------------|---------------------------------------------|
+| Runtime     | **Bun** ≥ 1.1                               |
+| Backend     | **Hono** (TypeScript), Prisma, Zod, JWT     |
+| Frontend    | **Vue 3**, Vite, Pinia, Vue Router, Zod     |
+| Validation  | **Zod** (shared schemas in packages/shared) |
+| Database    | PostgreSQL (Prisma ORM)                     |
+| Cache       | Redis (ioredis)                             |
+| Schema vis  | **CUE** (cuelang.org)                       |
+| Testing     | Bun test (API), Vitest (Web)                |
+| Package mgr | Bun workspaces                              |
 
 ## Architecture Principles
-1. **Clean Architecture**: domain → service → handler, no cross-layer imports.
-2. **Shared types**: All API request/response types live in `packages/shared/src/types/`.
-   Always import from `@rbac/shared` — never duplicate type definitions.
-3. **Dependency Injection**: Use NestJS `@Injectable()` + constructor injection in the API.
-4. **Repository Pattern**: Services depend on repository *interfaces* (`domain/interfaces/`),
-   not concrete implementations.
-5. **CUE as truth**: Domain entity shapes are defined in `cue/schema/*.cue`.
-   TypeScript types in `packages/shared` must stay consistent with CUE schemas.
+1. **Zod as single source of truth for types**: Define schemas in `packages/shared/src/schemas/`,
+   infer TypeScript types with `z.infer<>`. Never write separate `interface` / `type` for API shapes.
+2. **Clean layering** (API): `route → service → repository`. Routes only validate + call services.
+   Services contain business logic. Repositories contain all Prisma calls.
+3. **Shared schemas**: Both API (validation) and Web (form validation, API response parsing)
+   import from `@rbac/shared`. Zero type duplication.
+4. **CUE mirrors Zod**: Domain entity shapes are also defined in `cue/schema/*.cue` for
+   visualization and config validation. Keep them in sync with Zod schemas.
+5. **Bun-native**: Use `Bun.env` for env vars, `bun test` for API tests, `Bun.serve` implicitly
+   via Hono's default export pattern.
 
 ## Naming Conventions
-- Files: `kebab-case.ts` (e.g., `user.service.ts`)
-- Classes: `PascalCase` (e.g., `UsersService`)
-- Interfaces: `I` prefix (e.g., `IUserRepository`)
-- DTOs: suffix with `Dto` (e.g., `CreateUserDto`)
-- Entities (Prisma): suffix with `Entity` only for domain wrappers; Prisma models are plain names
+- Files: `kebab-case.ts` / `kebab-case.vue`
+- Classes: `PascalCase` (e.g., `UserService`)
+- Zod schemas: `<Entity>Schema` (e.g., `CreateUserSchema`)
+- Inferred types: `z.infer<typeof CreateUserSchema>` — export as `type CreateUserDto`
 - Vue components: `PascalCase.vue` (e.g., `UserTable.vue`)
 - Pinia stores: `use<Name>Store` (e.g., `useUsersStore`)
 - Composables: `use<Name>` (e.g., `useAuth`)
+- Route files: `<resource>.ts` inside `src/routes/`
 
 ## API Conventions
 - Base path: `/api/v1`
 - Auth: Bearer JWT in `Authorization` header
-- Responses always wrap data: `{ data: T, meta?: PaginationMeta }`
-- Errors follow RFC 7807 Problem Details format
+- All responses: `{ data: T, meta?: PaginationMeta }` for success; Problem Details (RFC 7807) for errors
+- Validation: use `@hono/zod-validator` with schemas from `@rbac/shared`
 - Pagination: `?page=1&limit=20` query params
 
 ## Domain Model
@@ -60,36 +64,74 @@ User ──< UserRole >── Role ──< RolePermission >── Permission
 ```
 - A **User** can have many **Roles**
 - A **Role** can have many **Permissions**
-- A **Permission** is `{ resource: string, action: string }` (e.g., `users:read`)
+- A **Permission** = `{ resource: string, action: string }` (e.g., `"users"`, `"read"`)
 
 ## Key Files to Know
-- `apps/api/src/app.module.ts` — NestJS root module
-- `apps/api/src/modules/auth/jwt.strategy.ts` — JWT validation
-- `apps/api/src/common/guards/jwt-auth.guard.ts` — route protection
-- `apps/api/src/common/guards/permissions.guard.ts` — permission check
-- `apps/api/prisma/schema.prisma` — database schema
-- `apps/web/src/router/index.ts` — Vue Router with auth guards
-- `apps/web/src/stores/auth.store.ts` — Pinia auth store
-- `packages/shared/src/types/index.ts` — shared types
+| File | Purpose |
+|------|---------|
+| `apps/api/src/index.ts` | Bun server entry point |
+| `apps/api/src/app.ts` | Hono app factory, mounts all routes |
+| `apps/api/src/config/env.ts` | Zod env validation (`Bun.env`) |
+| `apps/api/src/lib/prisma.ts` | Prisma client singleton |
+| `apps/api/src/lib/redis.ts` | Redis client singleton |
+| `apps/api/src/middleware/auth.ts` | JWT Bearer middleware |
+| `apps/api/src/middleware/permissions.ts` | Permission check middleware |
+| `apps/api/src/routes/*.ts` | Hono route handlers |
+| `apps/api/src/services/*.ts` | Business logic |
+| `apps/api/src/repositories/*.ts` | Prisma data access |
+| `apps/api/prisma/schema.prisma` | Database schema |
+| `apps/web/src/router/index.ts` | Vue Router (with auth guard) |
+| `apps/web/src/stores/auth.store.ts` | Pinia auth store |
+| `apps/web/src/api/client.ts` | Typed fetch client |
+| `packages/shared/src/schemas/` | Zod schemas (shared) |
+| `cue/schema/*.cue` | CUE entity schemas (visualization) |
+
+## Hono Route Pattern
+```typescript
+import { Hono } from 'hono'
+import { zValidator } from '@hono/zod-validator'
+import { CreateUserSchema } from '@rbac/shared'
+
+const users = new Hono()
+
+users.post('/', zValidator('json', CreateUserSchema), async (c) => {
+  const dto = c.req.valid('json')          // typed via Zod inference
+  const user = await userService.create(dto)
+  return c.json({ data: user }, 201)
+})
+
+export default users
+```
+
+## Zod Schema Pattern (packages/shared)
+```typescript
+import { z } from 'zod'
+
+export const CreateUserSchema = z.object({
+  email: z.string().email(),
+  username: z.string().min(3).max(50),
+  password: z.string().min(8),
+})
+export type CreateUserDto = z.infer<typeof CreateUserSchema>
+```
 
 ## Development Workflow
 1. Run `make init` once for first-time setup
 2. Run `make dev` to start all services
-3. Pick one feature from `feature_list.json` (status: "failing")
-4. Implement it, write tests, mark it "passing"
-5. Commit with `feat(<scope>): <description>` conventional commit format
-6. Update `copilot-progress.txt` with what was done
+3. Pick ONE feature from `feature_list.json` with `"status": "failing"`
+4. Implement it, write tests, mark it `"passing"`
+5. Commit: `feat(<scope>): <description>` (conventional commits)
+6. Update `copilot-progress.txt` with what was done and what's next
 
 ## Testing
-- **API unit tests**: `pnpm --filter api run test`
-- **API e2e tests**: `pnpm --filter api run test:e2e`
-- **Web tests**: `pnpm --filter web run test`
-- Mocks: Use `jest.mock()` for services; never mock domain entities
-- Test files: co-located `*.spec.ts` for unit, `test/*.e2e-spec.ts` for e2e
+- **API**: `bun test` — files matching `**/*.test.ts` or `**/*.spec.ts`
+- **Web**: `bun run --filter web test` (Vitest)
+- Mocks: use `mock()` from `bun:test` for API; `vi.mock()` for web
+- Never mock Zod schemas — test with real validation
 
 ## Do Not
-- Do not import from `../../` more than 2 levels — use workspace aliases instead
-- Do not put business logic in controllers/handlers — keep it in services
-- Do not bypass repository interfaces by calling Prisma directly in services
+- Do not use `any` — use `z.infer<>` or `unknown` with type guards
+- Do not call Prisma directly inside routes — always go through a service
+- Do not duplicate types — import from `@rbac/shared`
 - Do not commit `.env` files — use `.env.example` as template
-- Do not add `any` types without a TODO comment explaining why
+- Do not bypass Zod validation on incoming requests
