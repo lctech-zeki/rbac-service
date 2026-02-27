@@ -36,8 +36,8 @@ Thumbs.db
 coverage/
 .nyc_output/
 
-# Prisma generated client
-apps/api/node_modules/.prisma/
+# Drizzle generated migrations
+apps/api/src/db/migrations/
 
 # Vue / Vite
 apps/web/.vite/

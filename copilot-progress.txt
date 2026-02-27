@@ -1,50 +1,74 @@
 # Copilot Progress Log
-# Format: [YYYY-MM-DD] <summary of what was done in this session>
-# New sessions: READ THIS FILE FIRST, then read feature_list.json.
-# After each session: APPEND a new entry at the top of this file.
+# New sessions: READ THIS FIRST, then feature_list.json.
+# After each session: PREPEND a new entry.
 
 ---
 
-## [2026-02-27] — Initial scaffold
+## [2026-02-27] — Full scaffold complete (final stack)
+
+### Final tech stack
+- Runtime: Bun
+- API: Hono v4
+- Validation: Zod v3 (shared via packages/shared)
+- ORM: Drizzle ORM + postgres driver
+- Database: PostgreSQL 16
+- Cache: Redis 7 (ioredis)
+- Auth: JWT (jose) + Redis token deny-list
+- Frontend: Vue 3 + Vite + Pinia + Tailwind CSS
+- Schema visualization: CUE
+- Package manager: Bun workspaces
 
 ### Completed this session
-- Created full monorepo skeleton:
-  - pnpm workspaces (apps/api, apps/web, packages/shared)
-  - Docker Compose (postgres, redis, api, web)
-  - Makefile with all common targets
-  - .github/copilot-instructions.md (architecture guide for Copilot)
-  - .devcontainer/devcontainer.json (CUE + Node 20 + Docker-in-Docker)
-  - .vscode/extensions.json + settings.json
-  - feature_list.json (35 features, categories: infra/auth/users/roles/permissions/assignment/authz/ops)
-  - copilot-progress.txt (this file)
-  - init.sh (one-command bootstrap)
-  - CUE schema files (user, role, permission, config)
-  - NestJS API scaffold (app.module, prisma schema, domain entities, service stubs, controller stubs)
-  - Vue 3 web scaffold (router, Pinia stores, layout, view stubs)
-  - packages/shared (shared TS types)
-  - GitHub Actions CI workflow
+- Monorepo structure: apps/api, apps/web, packages/shared
+- packages/shared: all Zod schemas with z.infer<> types
+- apps/api:
+  - src/env.ts — Zod env validation (Bun.env)
+  - src/db.ts — Drizzle schema (users, roles, permissions, user_roles, role_permissions) + DB client
+  - src/redis.ts — Redis client
+  - src/auth.ts — JWT sign/verify + bearer middleware + token revocation
+  - src/routes/auth.ts — register, login, refresh, logout
+  - src/routes/users.ts — full CRUD + role assignment
+  - src/routes/roles.ts — full CRUD + permission assignment
+  - src/routes/permissions.ts — full CRUD
+  - src/routes/authz.ts — permission check (Redis cached) + user permissions list
+  - src/app.ts — Hono factory with all routes mounted
+  - src/index.ts — Bun server entry
+  - drizzle.config.ts, package.json, tsconfig.json, Dockerfile, .env.example
+- apps/web:
+  - router/index.ts — Vue Router with auth guard
+  - stores/auth.store.ts — Pinia auth store with token refresh
+  - api/client.ts — Axios client with JWT interceptor
+  - All views: LoginView, AppLayout, UsersView, RolesView, PermissionsView
+  - package.json, tsconfig.json, vite.config.ts, index.html, Dockerfile, nginx.conf
+- cue/schema/user.cue, role.cue, permission.cue
+- cue/config/config.cue
+- .github/workflows/ci.yml
+- .github/copilot-instructions.md (updated for final stack)
+- README.md
 
-### Features marked passing (infra scaffold)
-- infra-001: pnpm monorepo bootstrap
-- infra-002: Docker Compose local environment
-- infra-003: Prisma schema + migrations
-- infra-004: NestJS app bootstrap
-- infra-005: Vue 3 + Vite app bootstrap
-- infra-006: CUE schema files
-- infra-007: Shared types package
-- infra-008: GitHub Actions CI
+### Features marked passing
+- infra-001 through infra-005, ops-001, ops-002, ops-003
 
 ### Next session — recommended starting point
-Pick `auth-001` (User registration):
-- File: `apps/api/src/modules/auth/auth.service.ts`
-- Add `register(dto: RegisterDto)` method with bcrypt password hashing
-- File: `apps/api/src/modules/auth/auth.controller.ts`
-- Add `POST /api/v1/auth/register` endpoint
-- Write tests in `apps/api/src/modules/auth/auth.service.spec.ts`
-- Mark `auth-001` as `"passing"` in feature_list.json
-- Run: `pnpm --filter api run test`
+Run `make init` to bootstrap the environment, then pick `infra-006`:
 
-### Environment state
-- Database: schema defined in apps/api/prisma/schema.prisma (not yet migrated)
-- Run `make init` to bootstrap the full environment
-- API runs on :3000, Web on :8080
+**Task: Run Drizzle migrations**
+1. `cd apps/api`
+2. `bunx drizzle-kit generate` — generates SQL migration files into `src/db/migrations/`
+3. `bunx drizzle-kit migrate` — applies migrations to PostgreSQL
+4. Verify with `make db-studio` that all 5 tables exist
+5. Mark `infra-006` as `"passing"` in feature_list.json
+6. Then do `infra-007` (seed.ts)
+
+### Environment
+- API: http://localhost:3000/api/v1
+- Web: http://localhost:8080
+- DB: localhost:5432 (user: rbac, pass: rbac_secret, db: rbac_db)
+- Redis: localhost:6379
+- Run `make init` to start everything
+
+### Known gaps (implement in upcoming sessions)
+- No tests written yet (all test features are "failing") — start with auth-001
+- DB seed script not yet created — infra-007
+- Create/edit modals in web views — web-003, web-004
+- Redis cache invalidation on role/permission change not fully wired — authz-002

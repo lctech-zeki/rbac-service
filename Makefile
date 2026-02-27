@@ -44,13 +44,13 @@ $(DOCKER_COMPOSE) up -d postgres redis
 db-down: ## Stop database services
 $(DOCKER_COMPOSE) down
 
-db-migrate: ## Run Prisma migrations
+db-migrate: ## Run Drizzle migrations
 $(BUN) run --filter api db:migrate
 
 db-seed: ## Seed the database
 $(BUN) run --filter api db:seed
 
-db-studio: ## Open Prisma Studio
+db-studio: ## Open Drizzle Studio
 $(BUN) run --filter api db:studio
 
 cue-vet: ## Validate CUE schemas

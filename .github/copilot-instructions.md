@@ -1,137 +1,134 @@
 # GitHub Copilot Instructions — rbac-service
 
 ## Project Overview
-A **Role-Based Access Control (RBAC) microservice** monorepo with a full-stack TypeScript architecture.
+A **Role-Based Access Control (RBAC) microservice** — simple, fast, and production-ready.
+Monorepo with a Hono API (Bun runtime) and a Vue 3 admin dashboard.
 
 ## Monorepo Structure
 ```
 rbac-service/
 ├── apps/
-│   ├── api/        # Hono backend — REST API (runs on Bun)
-│   └── web/        # Vue 3 frontend — admin dashboard
+│   ├── api/              # Hono + Bun + Drizzle — REST API
+│   └── web/              # Vue 3 + Vite — admin dashboard
 ├── packages/
-│   └── shared/     # Shared Zod schemas + inferred TS types
-├── cue/            # CUE language schemas for config & data model visualization
-├── feature_list.json    # Incremental feature tracking (agent harness)
-└── copilot-progress.txt # Session handoff log
+│   └── shared/           # Zod schemas + inferred TS types (shared by both apps)
+├── cue/                  # CUE schemas for data model visualization
+├── feature_list.json     # Incremental feature checklist
+└── copilot-progress.txt  # Session handoff log
 ```
 
-## Tech Stack
-| Layer       | Technology                                  |
-|-------------|---------------------------------------------|
-| Runtime     | **Bun** ≥ 1.1                               |
-| Backend     | **Hono** (TypeScript), Prisma, Zod, JWT     |
-| Frontend    | **Vue 3**, Vite, Pinia, Vue Router, Zod     |
-| Validation  | **Zod** (shared schemas in packages/shared) |
-| Database    | PostgreSQL (Prisma ORM)                     |
-| Cache       | Redis (ioredis)                             |
-| Schema vis  | **CUE** (cuelang.org)                       |
-| Testing     | Bun test (API), Vitest (Web)                |
-| Package mgr | Bun workspaces                              |
+## Final Tech Stack
+| Layer        | Technology                                       |
+|--------------|--------------------------------------------------|
+| Runtime      | **Bun** ≥ 1.1                                    |
+| API          | **Hono** v4                                      |
+| Validation   | **Zod** v3 (shared via `@rbac/shared`)           |
+| ORM          | **Drizzle ORM** + `postgres` driver              |
+| Database     | PostgreSQL 16                                    |
+| Cache        | Redis 7 (ioredis)                                |
+| Auth         | JWT via `jose` + Redis token deny-list           |
+| Frontend     | **Vue 3** + Vite + Pinia + Vue Router            |
+| Styling      | Tailwind CSS                                     |
+| Schema vis   | **CUE** (cuelang.org)                            |
+| Testing      | Bun test (API) · Vitest (Web)                    |
+| Package mgr  | Bun workspaces                                   |
+| CI           | GitHub Actions                                   |
 
-## Architecture Principles
-1. **Zod as single source of truth for types**: Define schemas in `packages/shared/src/schemas/`,
-   infer TypeScript types with `z.infer<>`. Never write separate `interface` / `type` for API shapes.
-2. **Clean layering** (API): `route → service → repository`. Routes only validate + call services.
-   Services contain business logic. Repositories contain all Prisma calls.
-3. **Shared schemas**: Both API (validation) and Web (form validation, API response parsing)
-   import from `@rbac/shared`. Zero type duplication.
-4. **CUE mirrors Zod**: Domain entity shapes are also defined in `cue/schema/*.cue` for
-   visualization and config validation. Keep them in sync with Zod schemas.
-5. **Bun-native**: Use `Bun.env` for env vars, `bun test` for API tests, `Bun.serve` implicitly
-   via Hono's default export pattern.
-
-## Naming Conventions
-- Files: `kebab-case.ts` / `kebab-case.vue`
-- Classes: `PascalCase` (e.g., `UserService`)
-- Zod schemas: `<Entity>Schema` (e.g., `CreateUserSchema`)
-- Inferred types: `z.infer<typeof CreateUserSchema>` — export as `type CreateUserDto`
-- Vue components: `PascalCase.vue` (e.g., `UserTable.vue`)
-- Pinia stores: `use<Name>Store` (e.g., `useUsersStore`)
-- Composables: `use<Name>` (e.g., `useAuth`)
-- Route files: `<resource>.ts` inside `src/routes/`
-
-## API Conventions
-- Base path: `/api/v1`
-- Auth: Bearer JWT in `Authorization` header
-- All responses: `{ data: T, meta?: PaginationMeta }` for success; Problem Details (RFC 7807) for errors
-- Validation: use `@hono/zod-validator` with schemas from `@rbac/shared`
-- Pagination: `?page=1&limit=20` query params
+## Architecture — Keep It Simple
+- **No repository layer** — services (`routes/`) query Drizzle directly.
+- **Flat src/ layout** — `env.ts`, `db.ts`, `redis.ts`, `auth.ts` all at `src/`.
+- **Zod as the single source of truth for types** — define in `packages/shared`, infer with `z.infer<>`.
+- **Routes = validate → query → respond** — no indirection.
 
 ## Domain Model
 ```
-User ──< UserRole >── Role ──< RolePermission >── Permission
+User ──< user_roles >── Role ──< role_permissions >── Permission
 ```
-- A **User** can have many **Roles**
-- A **Role** can have many **Permissions**
-- A **Permission** = `{ resource: string, action: string }` (e.g., `"users"`, `"read"`)
+- Permissions: `{ resource, action }` pairs e.g. `{ resource: "users", action: "read" }`
 
-## Key Files to Know
+## API Base Path: `/api/v1`
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | /auth/register | Register user |
+| POST | /auth/login | Login → JWT |
+| POST | /auth/refresh | Refresh access token |
+| POST | /auth/logout | Revoke token |
+| GET/POST/PATCH/DELETE | /users | CRUD users |
+| POST/DELETE | /users/:id/roles | Assign/revoke roles |
+| GET/POST/PATCH/DELETE | /roles | CRUD roles |
+| POST/DELETE | /roles/:id/permissions | Assign/revoke permissions |
+| GET/POST/PATCH/DELETE | /permissions | CRUD permissions |
+| POST | /authz/check | Check `{userId, resource, action}` |
+
+## Key Files
 | File | Purpose |
 |------|---------|
-| `apps/api/src/index.ts` | Bun server entry point |
-| `apps/api/src/app.ts` | Hono app factory, mounts all routes |
-| `apps/api/src/config/env.ts` | Zod env validation (`Bun.env`) |
-| `apps/api/src/lib/prisma.ts` | Prisma client singleton |
-| `apps/api/src/lib/redis.ts` | Redis client singleton |
-| `apps/api/src/middleware/auth.ts` | JWT Bearer middleware |
-| `apps/api/src/middleware/permissions.ts` | Permission check middleware |
-| `apps/api/src/routes/*.ts` | Hono route handlers |
-| `apps/api/src/services/*.ts` | Business logic |
-| `apps/api/src/repositories/*.ts` | Prisma data access |
-| `apps/api/prisma/schema.prisma` | Database schema |
-| `apps/web/src/router/index.ts` | Vue Router (with auth guard) |
+| `apps/api/src/env.ts` | Zod env validation (Bun.env) |
+| `apps/api/src/db.ts` | Drizzle schema + client (all in one) |
+| `apps/api/src/redis.ts` | Redis client |
+| `apps/api/src/auth.ts` | JWT sign/verify + bearer middleware |
+| `apps/api/src/app.ts` | Hono factory, mounts all routes |
+| `apps/api/src/index.ts` | Bun server entry |
+| `apps/api/src/routes/*.ts` | Route handlers |
+| `apps/api/drizzle.config.ts` | Drizzle Kit config |
+| `apps/web/src/api/client.ts` | Axios client + JWT interceptor |
 | `apps/web/src/stores/auth.store.ts` | Pinia auth store |
-| `apps/web/src/api/client.ts` | Typed fetch client |
-| `packages/shared/src/schemas/` | Zod schemas (shared) |
+| `packages/shared/src/index.ts` | All Zod schemas + inferred types |
 | `cue/schema/*.cue` | CUE entity schemas (visualization) |
 
-## Hono Route Pattern
+## Code Patterns
+
+### Hono route (validate → Drizzle → respond)
 ```typescript
-import { Hono } from 'hono'
-import { zValidator } from '@hono/zod-validator'
-import { CreateUserSchema } from '@rbac/shared'
-
-const users = new Hono()
-
-users.post('/', zValidator('json', CreateUserSchema), async (c) => {
-  const dto = c.req.valid('json')          // typed via Zod inference
-  const user = await userService.create(dto)
-  return c.json({ data: user }, 201)
+router.post('/', zValidator('json', CreateRoleSchema), async (c) => {
+  const dto = c.req.valid('json')                     // typed via Zod
+  const [role] = await db.insert(roles).values(dto).returning()
+  return c.json({ data: role }, 201)
 })
-
-export default users
 ```
 
-## Zod Schema Pattern (packages/shared)
+### Drizzle query
 ```typescript
-import { z } from 'zod'
+import { db, users } from '../db'
+import { eq, isNull, and } from 'drizzle-orm'
 
-export const CreateUserSchema = z.object({
-  email: z.string().email(),
-  username: z.string().min(3).max(50),
-  password: z.string().min(8),
+const user = await db.query.users.findFirst({
+  where: and(eq(users.id, id), isNull(users.deletedAt)),
+  columns: { passwordHash: false },
 })
-export type CreateUserDto = z.infer<typeof CreateUserSchema>
+```
+
+### Zod schema (packages/shared)
+```typescript
+export const CreateRoleSchema = z.object({
+  name: z.string().min(2).max(100),
+  description: z.string().max(500).optional(),
+})
+export type CreateRoleDto = z.infer<typeof CreateRoleSchema>
 ```
 
 ## Development Workflow
-1. Run `make init` once for first-time setup
-2. Run `make dev` to start all services
-3. Pick ONE feature from `feature_list.json` with `"status": "failing"`
-4. Implement it, write tests, mark it `"passing"`
-5. Commit: `feat(<scope>): <description>` (conventional commits)
-6. Update `copilot-progress.txt` with what was done and what's next
+1. `make init` — first-time bootstrap
+2. `make dev` — start all services
+3. Pick ONE `"failing"` feature from `feature_list.json`
+4. Implement + test + mark `"passing"` + commit
+5. Update `copilot-progress.txt`
 
-## Testing
-- **API**: `bun test` — files matching `**/*.test.ts` or `**/*.spec.ts`
-- **Web**: `bun run --filter web test` (Vitest)
-- Mocks: use `mock()` from `bun:test` for API; `vi.mock()` for web
-- Never mock Zod schemas — test with real validation
+## Commands
+| Command | Description |
+|---------|-------------|
+| `make dev` | Start everything |
+| `make dev-api` | API only (hot reload) |
+| `make dev-web` | Web only |
+| `make test-api` | Bun tests |
+| `make test-web` | Vitest |
+| `make db-migrate` | Run Drizzle migrations |
+| `make db-studio` | Open Drizzle Studio |
+| `make cue-vet` | Validate CUE schemas |
 
 ## Do Not
-- Do not use `any` — use `z.infer<>` or `unknown` with type guards
-- Do not call Prisma directly inside routes — always go through a service
-- Do not duplicate types — import from `@rbac/shared`
-- Do not commit `.env` files — use `.env.example` as template
-- Do not bypass Zod validation on incoming requests
+- Do not add unnecessary abstraction layers (no repositories, no DI containers)
+- Do not use `any` — use `z.infer<>` or `unknown`
+- Do not call DB directly in routes — keep Drizzle calls in route handlers, not inline in business logic
+- Do not duplicate types — always import from `@rbac/shared`
+- Do not commit `.env` files

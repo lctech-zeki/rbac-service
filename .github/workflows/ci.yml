@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: API (Bun + Hono + Drizzle)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rbac
+          POSTGRES_PASSWORD: rbac_secret
+          POSTGRES_DB: rbac_db
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+        working-directory: .
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Lint
+        run: bun run lint
+      - name: Run migrations
+        run: bun run db:migrate
+        env:
+          DATABASE_URL: postgresql://rbac:rbac_secret@localhost:5432/rbac_db
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: ci-test-secret-at-least-32-characters
+          JWT_EXPIRES_IN: 15m
+          JWT_REFRESH_EXPIRES_IN: 7d
+      - name: Test
+        run: bun test
+        env:
+          DATABASE_URL: postgresql://rbac:rbac_secret@localhost:5432/rbac_db
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: ci-test-secret-at-least-32-characters
+          JWT_EXPIRES_IN: 15m
+          JWT_REFRESH_EXPIRES_IN: 7d
+      - name: Build
+        run: bun run build
+
+  web:
+    name: Web (Vue 3 + Vite)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+        working-directory: .
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Test
+        run: bun run test
+      - name: Build
+        run: bun run build
+
+  shared:
+    name: Shared types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: bun run typecheck
+        working-directory: packages/shared

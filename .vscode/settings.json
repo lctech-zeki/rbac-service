@@ -7,9 +7,6 @@
   "[vue]": {
     "editor.defaultFormatter": "Vue.volar"
   },
-  "[prisma]": {
-    "editor.defaultFormatter": "Prisma.prisma"
-  },
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "eslint.workingDirectories": [
