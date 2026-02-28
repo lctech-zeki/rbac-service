@@ -165,6 +165,47 @@
       "description": "Lint + typecheck + test + build on every PR for api, web, shared",
       "status": "passing",
       "tests": ["CI passes on clean commit"]
+    },
+    {
+      "id": "rbac-001", "category": "RBAC Core",
+      "name": "Role inheritance with circular-dependency detection",
+      "description": "roles.parentId FK; PUT/DELETE /:id/parent endpoints; isAncestorOf guard blocks cycles; permission check traverses descendant roles",
+      "status": "passing",
+      "tests": [
+        "apps/api/src/routes/roles.test.ts — circular detection algorithm tests pass",
+        "PUT /roles/:id/parent returns 422 when cycle detected",
+        "PUT /roles/:id/parent returns 200 when safe"
+      ]
+    },
+    {
+      "id": "rbac-002", "category": "RBAC Core",
+      "name": "Wildcard resource/action matching",
+      "description": "matchesPattern() in utils/permission-utils.ts; * matches any sequence; used in checkUserPermission",
+      "status": "passing",
+      "tests": [
+        "apps/api/src/utils/permission-utils.test.ts — all wildcard pattern tests pass"
+      ]
+    },
+    {
+      "id": "rbac-003", "category": "RBAC Core",
+      "name": "Permission groups",
+      "description": "permissionGroups + permissionGroupItems + rolePermissionGroups tables; /permission-groups CRUD + item management; roles can bind groups",
+      "status": "passing",
+      "tests": [
+        "GET/POST/PATCH/DELETE /permission-groups passes",
+        "POST/DELETE /permission-groups/:id/permissions passes",
+        "POST/DELETE /roles/:id/permission-groups passes",
+        "checkUserPermission includes permissions from groups"
+      ]
+    },
+    {
+      "id": "rbac-004", "category": "RBAC Core",
+      "name": "Permission union across roles and inherited roles",
+      "description": "getAllUserPermissions() collects direct + group permissions from all descendant roles; deduplication applied",
+      "status": "passing",
+      "tests": [
+        "apps/api/src/routes/roles.test.ts — expandRoleDescendants algorithm tests pass"
+      ]
     }
   ]
 }

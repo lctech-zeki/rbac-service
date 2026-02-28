@@ -7,6 +7,7 @@ import usersRoutes from './routes/users'
 import rolesRoutes from './routes/roles'
 import permissionsRoutes from './routes/permissions'
 import authzRoutes from './routes/authz'
+import permissionGroupsRoutes from './routes/permission-groups'
 
 const app = new Hono().basePath('/api/v1')
 
@@ -23,6 +24,7 @@ app.route('/users', usersRoutes)
 app.route('/roles', rolesRoutes)
 app.route('/permissions', permissionsRoutes)
 app.route('/authz', authzRoutes)
+app.route('/permission-groups', permissionGroupsRoutes)
 
 // ─── Error handler ────────────────────────────────────────────────────────────
 app.onError((err, c) => {

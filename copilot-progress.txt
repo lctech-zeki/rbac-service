@@ -4,6 +4,61 @@
 
 ---
 
+## [2026-02-27] — PRD implementation: role inheritance, wildcards, permission groups
+
+### Completed this session (based on product PRD)
+- **DB schema** (`apps/api/src/db.ts`):
+  - Added `parentId` (nullable self-FK) to `roles` table
+  - Added `permissionGroups` table (id, name, description, timestamps)
+  - Added `permissionGroupItems` table (group ↔ permission junction)
+  - Added `rolePermissionGroups` table (role ↔ permission-group junction)
+  - Updated all Drizzle relations (self-referential roles, groups, items)
+- **Shared schemas** (`packages/shared/src/index.ts`):
+  - Added `parentId` to `RoleSchema` and `CreateRoleSchema`
+  - Added `SetRoleParentSchema`
+  - Added `PermissionGroupSchema`, `CreatePermissionGroupSchema`, `UpdatePermissionGroupSchema`
+  - Added `AssignPermissionGroupSchema`
+- **Roles route** (`apps/api/src/routes/roles.ts`):
+  - `POST /roles` and `PATCH /roles/:id` now accept `parentId`
+  - `PUT /roles/:id/parent` — set parent role with circular-dependency guard
+  - `DELETE /roles/:id/parent` — remove parent relationship
+  - `GET/POST/DELETE /roles/:id/permission-groups` — manage permission group assignments
+  - Exported `isAncestorOf()` helper
+- **Permission Groups route** (new: `apps/api/src/routes/permission-groups.ts`):
+  - Full CRUD: `GET/POST/PATCH/DELETE /permission-groups`
+  - `GET/POST/DELETE /permission-groups/:id/permissions`
+- **Authorization** (`apps/api/src/routes/authz.ts`):
+  - `checkUserPermission` now traverses all descendant roles (BFS on parentId tree)
+  - Includes permissions from permission groups (via `rolePermissionGroups`)
+  - Wildcard matching via `matchesPattern` utility
+- **Utility** (new: `apps/api/src/utils/permission-utils.ts`):
+  - `matchesPattern(pattern, value)` — `*` in pattern matches any character sequence
+- **App** (`apps/api/src/app.ts`):
+  - Mounted `/permission-groups` route
+- **CUE schemas**:
+  - Updated `cue/schema/role.cue` — added `parentId` field
+  - Added `cue/schema/permission-group.cue`
+- **Tests**:
+  - `apps/api/src/utils/permission-utils.test.ts` — wildcard matching unit tests
+  - `apps/api/src/routes/roles.test.ts` — circular-dependency detection + descendant expansion algorithm tests
+
+### Features marked passing
+- rbac-001: Role inheritance with circular-dependency detection
+- rbac-002: Wildcard resource/action matching
+- rbac-003: Permission groups
+- rbac-004: Permission union across roles and inherited roles
+
+### Next session — recommended starting point
+Run `make db-migrate` to apply the schema changes (new tables + parentId column).
+Then consider implementing the remaining "failing" test suites:
+- auth-001 / auth-002: auth route tests
+- user-001 / user-002: user CRUD + role assignment tests
+- role-001 / role-002: role CRUD + permission assignment tests
+- perm-001: permission CRUD tests
+- authz-001 / authz-002: permission check + Redis cache tests
+
+---
+
 ## [2026-02-27] — Full scaffold complete (final stack)
 
 ### Final tech stack
