@@ -5,6 +5,11 @@
     "browser": true,
     "node": true
   },
+  "globals": {
+    "defineProps": "readonly",
+    "defineEmits": "readonly",
+    "defineOptions": "readonly"
+  },
   "rules": {
     "no-unused-vars": "warn",
     "no-console": "warn",
