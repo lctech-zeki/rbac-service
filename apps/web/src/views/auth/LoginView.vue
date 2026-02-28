@@ -9,6 +9,7 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+const isDev = process.env.NODE_ENV === 'development'
 
 async function submit() {
   error.value = ''
@@ -28,6 +29,7 @@ async function submit() {
   <div class="min-h-screen flex items-center justify-center bg-gray-50">
     <div class="w-full max-w-md bg-white rounded-xl shadow p-8">
       <h1 class="text-2xl font-bold text-gray-900 mb-6">RBAC Admin</h1>
+      <p v-if="isDev" class="text-sm text-red-600">admin@example.com / admin</p>
       <form @submit.prevent="submit" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700">Email</label>

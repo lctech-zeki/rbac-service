@@ -32,6 +32,11 @@ for dir in apps/api apps/web; do
   fi
 done
 
+# Load .env for subsequent commands
+if [ -f "apps/api/.env" ]; then
+  export $(grep -v '^#' apps/api/.env | xargs)
+fi
+
 # 4. Start infrastructure
 info "Starting PostgreSQL and Redis..."
 docker compose up -d postgres redis
@@ -40,13 +45,13 @@ until docker compose exec -T postgres pg_isready -U rbac &>/dev/null; do sleep 1
 ok "PostgreSQL ready"
 
 # 5. Drizzle migrations
-info "Running Drizzle migrations..."
-(cd apps/api && bunx drizzle-kit migrate)
+info "Generating and applying Drizzle migrations..."
+(cd apps/api && bunx drizzle-kit generate && bunx drizzle-kit migrate)
 ok "Migrations applied"
 
 # 6. Seed database
 info "Seeding database..."
-bun run --filter api db:seed || warn "Seed not yet implemented — skipping"
+(cd apps/api && bun run db:seed) || warn "Seed not yet implemented — skipping"
 
 # 7. Validate CUE schemas
 if command -v cue &>/dev/null; then
